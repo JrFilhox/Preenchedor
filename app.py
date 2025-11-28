@@ -180,77 +180,77 @@ def rodar_automacao(
             callback_log("Nenhum IP encontrado em ips.txt.")
         return
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context()
+    p = sync_playwright().start()
+    browser = p.chromium.launch(headless=False)
+    context = browser.new_context()
 
-        for i, linha in enumerate(ips):
-            try:
-                ip_path, reverso = linha.split()
-                url = f"http://{ip_path}"
-                page = context.new_page()
-                page.goto(url)
+    for i, linha in enumerate(ips):
+        try:
+            ip_path, reverso = linha.split()
+            url = f"http://{ip_path}"
+            page = context.new_page()
+            page.goto(url)
 
-                html_path = random.choice(arquivos_html)
-                html_content = ler_arquivo_conteudo(str(html_path))
+            html_path = random.choice(arquivos_html)
+            html_content = ler_arquivo_conteudo(str(html_path))
 
-                link_atual = ""
-                if links:
-                    link_atual = links[link_index % len(links)]
-                    link_index += 1
-                    logging.info(f"Link usado (posição {link_index}): {link_atual}")
-                    if callback_log:
-                        callback_log(f"[LINK] Usando link {link_index}/{len(links)}: {link_atual}")
-
-                dados = {
-                    "sender_email": f"{random.choice(prefixos)}@{reverso}",
-                    "sender_name": random.choice(nomes),
-                    "subject": random.choice(assuntos),
-                    "html": html_content,
-                }
-
-                arquivo_lista = listas[i % len(listas)]
-                emails = ler_arquivo_conteudo(str(arquivo_lista))
-                preencher_formulario(
-                    page,
-                    dados,
-                    locs,
-                    emails,
-                    botao_enviar,
-                    clicar_enviar,
-                    link_atual,
-                    callback_log,
-                )
-                mover_para_processados(arquivo_lista)
-
-                if callback_progresso:
-                    callback_progresso(len(ips), i + 1)
-                if callback_status:
-                    callback_status(f"Processando IP {i + 1} de {len(ips)}: {linha}")
-            except Exception as e:
-                logging.error(f"Erro no IP {linha}: {e}")
+            link_atual = ""
+            if links:
+                link_atual = links[link_index % len(links)]
+                link_index += 1
+                logging.info(f"Link usado (posição {link_index}): {link_atual}")
                 if callback_log:
-                    callback_log("[ERRO] Ocorreu um erro ao processar um dos IPs. Veja detalhes no execucao.log")
+                    callback_log(f"[LINK] Usando link {link_index}/{len(links)}: {link_atual}")
 
-        if callback_log:
-            callback_log("Execução encerrada. Você pode interagir com as abas manualmente.")
-        if callback_status:
-            callback_status("Execução concluída.")
+            dados = {
+                "sender_email": f"{random.choice(prefixos)}@{reverso}",
+                "sender_name": random.choice(nomes),
+                "subject": random.choice(assuntos),
+                "html": html_content,
+            }
+
+            arquivo_lista = listas[i % len(listas)]
+            emails = ler_arquivo_conteudo(str(arquivo_lista))
+            preencher_formulario(
+                page,
+                dados,
+                locs,
+                emails,
+                botao_enviar,
+                clicar_enviar,
+                link_atual,
+                callback_log,
+            )
+            mover_para_processados(arquivo_lista)
+
+            if callback_progresso:
+                callback_progresso(len(ips), i + 1)
+            if callback_status:
+                callback_status(f"Processando IP {i + 1} de {len(ips)}: {linha}")
+        except Exception as e:
+            logging.error(f"Erro no IP {linha}: {e}")
+            if callback_log:
+                callback_log("[ERRO] Ocorreu um erro ao processar um dos IPs. Veja detalhes no execucao.log")
+
+    if callback_log:
+        callback_log("Execução encerrada. O navegador permanecerá aberto para ações manuais.")
+    if callback_status:
+        callback_status("Execução concluída. Navegador aberto.")
 
 
 class CaveiraMailerGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Caveira Mailer – Painel")
-        self.geometry("1000x700")
+        self.geometry("900x600")
         self.configure(bg="#f2f2f2")
 
         self.style = ttk.Style()
         self.style.theme_use("clam")
         self.style.configure("TFrame", background="#f2f2f2")
-        self.style.configure("TLabel", background="#f2f2f2", font=("Segoe UI", 10))
-        self.style.configure("TButton", font=("Segoe UI", 10))
-        self.style.configure("Heading.TLabel", font=("Segoe UI", 11, "bold"))
+        self.style.configure("TLabel", background="#f2f2f2", font=("Segoe UI", 9))
+        self.style.configure("TButton", font=("Segoe UI", 9))
+        self.style.configure("Heading.TLabel", font=("Segoe UI", 10, "bold"))
 
         self.tab_buttons = {}
         self.frames: Dict[str, ttk.Frame] = {}
@@ -392,7 +392,7 @@ class CaveiraMailerGUI(tk.Tk):
     def _criar_text_widget(self, parent, height: int = 20) -> tk.Text:
         text_frame = ttk.Frame(parent)
         text_frame.pack(fill=tk.BOTH, expand=True)
-        text_widget = tk.Text(text_frame, wrap=tk.WORD, height=height, font=("Segoe UI", 10))
+        text_widget = tk.Text(text_frame, wrap=tk.WORD, height=height, font=("Segoe UI", 9))
         text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=text_widget.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
